@@ -15,12 +15,16 @@ log() {
   logger -s -p $priority -t $tag $msg
 }
 
-log_info() {
-  log user.info "$@"
+log_debug() {
+  log user.debug "$@"
 }
 
 log_err() {
   log user.err "$@"
+}
+
+log_info() {
+  log user.info "$@"
 }
 
 log_warn() {
