@@ -4,7 +4,7 @@ logger_tag() {
   local datetime="$(date '+%Y-%m-%d %H:%M:%S.%4N')" # on alpine install coreutils package to get nanoseconds %N
   local app="${0##*/}"
   local level="${1:-info}"
-  echo "time=\"$datetime\" level=\"$level\" app=\"$app\" msg:"
+  echo "time=\"$datetime\" level=\"$level\" app=\"$app\" line=\"$LINENO\" msg:"
 }
 
 log() {
