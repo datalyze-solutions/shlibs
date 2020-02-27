@@ -13,7 +13,7 @@ wait_for_postgres() {
 
     log_info "Checking for postgres..."
     until pg_isready -q -h $host; do
-        log_err "Postgres is unavailable - retrying in a $sleeptime seconds"
+        log_err "Postgres is unavailable - retrying $host in a $sleeptime seconds"
         sleep $sleeptime
     done
     log_info "Postgres is available"
