@@ -6,17 +6,17 @@ _logger_tag_base() {
 
 _logger_tag_info() {
   echo $(_logger_tag_base)
-  echo "msg:"
+  # echo "msg:"
 }
 
 _logger_tag_err() {
   echo $(_logger_tag_base)
-  echo "file=\"${BASH_SOURCE[$caller_index]}\" line=\"${BASH_LINENO[$caller_index - 1]}\" msg:"
+  echo "file=\"${BASH_SOURCE[$caller_index]}\" line=\"${BASH_LINENO[$caller_index - 1]}\""
 }
 
 _logger_tag_debug() {
   echo $(_logger_tag_base)
-  echo "file=\"${BASH_SOURCE[$caller_index]}\" line=\"${BASH_LINENO[$caller_index - 1]}\" function=\"${FUNCNAME[$caller_index]}\" msg:"
+  echo "file=\"${BASH_SOURCE[$caller_index]}\" line=\"${BASH_LINENO[$caller_index - 1]}\" function=\"${FUNCNAME[$caller_index]}\""
 }
 
 logger_tag() {
@@ -58,29 +58,56 @@ logger_tag() {
 }
 
 log() {
-  local priority=${1:-user.info}      # needs to be logger priority
-  local tag="$(logger_tag $priority)" # name of programm
-  shift                               # remove first param from $@
-  local msg="$@"                      # all the rest
-  logger -s -p $priority -t $tag $msg
+  # https://eklitzke.org/using-local-optind-with-bash-getopts
+  local OPTIND ignore
+  local invalid_opts=0
+  local quiet=0
+
+  while getopts ":p:q" opt; do
+    case $opt in
+    q)
+      quiet=1
+      ;;
+    p)
+      # needs to be logger priority
+      priority="${OPTARG:-user.info}"
+      ;;
+    \?)
+      # count invalid options, e.g. log_info "-d test test"
+      # use them as message
+      invalid_opts=$((invalid_opts + 1))
+      ;;
+    esac
+  done
+  # remove opts from msg; take invalid opts into calculation
+  shift "$((OPTIND - 1 - invalid_opts))"
+
+  local tag="$(logger_tag $priority)"   # name of programm
+  local msg="$@"                        # use all the rest as message
+
+  if [ "${quiet:-0}" -eq 1 ]; then
+    echo >&2 "$msg"
+  else
+    logger -s -p $priority "$tag msg=\"$msg\""
+  fi
 }
 
 log_debug() {
-  log user.debug "$@"
+  log -p user.debug "$@"
 }
 
 log_err() {
-  log user.err "$@"
+  log -p user.err "$@"
 }
 
 log_info() {
-  log user.info "$@"
+  log -p user.info "$@"
 }
 
 log_warn() {
-  log user.err "$@"
+  log -p user.err "$@"
 }
 
 log_notice() {
-  log user.notice "$@"
+  log -p user.notice "$@"
 }
