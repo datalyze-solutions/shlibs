@@ -66,7 +66,8 @@ log() {
   while getopts ":p:q" opt; do
     case $opt in
     q)
-      quiet=1
+      quiet=$((quiet + 1))
+      # quiet=1
       ;;
     p)
       # needs to be logger priority
@@ -85,10 +86,14 @@ log() {
   local tag="$(logger_tag $priority)"   # name of programm
   local msg="$@"                        # use all the rest as message
 
-  if [ "${quiet:-0}" -eq 1 ]; then
-    echo >&2 "$msg"
-  else
+  if [ "${quiet:-0}" -eq 0 ]; then
     logger -s -p $priority "$tag msg=\"$msg\""
+  else
+    if [ "${quiet:-0}" -eq 1 ]; then
+      echo >&2 "[$priority] $msg"
+    else
+      echo >&2 "$msg"
+    fi
   fi
 }
 
