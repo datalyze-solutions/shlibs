@@ -8,10 +8,19 @@ add_user() {
 
     log_info "creating new user: $uid $gid $username $shell"
 
+    if [[ $(getent passwd "${uid}") ]]; then
+        log_warn "User '${uid}' still exists as '$(getent passwd "${uid}")'"
+        return
+    fi
+    if [ $(getent group "${gid}") ]; then
+        log_warn "Group '${gid}' still exists"
+        return
+    fi
+
     addgroup --gid "${gid}" "${username}"
     if [ -z "${shell}" ]; then
-        adduser --uid "${uid}" --disabled-password --ingroup "${username}" "${username}"
+        adduser --uid "${uid}" --disabled-password --ingroup "${gid}" "${username}"
     else
-        adduser --uid "${uid}" --disabled-password --ingroup "${username}" "${username}" --shell "${shell}"
+        adduser --uid "${uid}" --disabled-password --ingroup "${gid}" "${username}" --shell "${shell}"
     fi
 }
