@@ -48,7 +48,11 @@ export_encrypted_variable() {
     local options_array_name="$1"
     declare -n options_ref="$options_array_name"
 
-    if [ -z "${options_ref[source_name]}" ]; then
+    declare -A local_options
+    clone_associative_array options_ref local_options
+    unset -n options_ref
+
+    if [ -z "${local_options[source_name]}" ]; then
         log_err "error: secret key name undefined or empty"
         exit 1
     fi
@@ -56,7 +60,7 @@ export_encrypted_variable() {
     local content=$(decrypt_file $options_array_name)
     # use grep with regex to find exact key without any leading or trailing chars
     local value=$(echo "${content:-}" |
-        grep "^"${options_ref[source_name]}"=" |
+        grep "^"${local_options[source_name]}"=" |
         head -n1 |
         cut -d'=' -f2)
 
@@ -64,15 +68,19 @@ export_encrypted_variable() {
     # log_debug "Value: $value"
 
     if [ -z "${value}" ]; then
-        log_err "error: secret key ${options_ref[source_name]} not found in ${options_ref[secrets_file]} or value is empty"
+        log_err "error: secret key ${local_options[source_name]} not found in ${local_options[secrets_file]} or value is empty"
         exit 2
     fi
 
-    if [ -z "${options_ref[target_name]}" ]; then
-        options_ref[target_name]="${options_ref[source_name]}"
+    if [ -z "${local_options[target_name]}" ]; then
+        local_options[target_name]="${local_options[source_name]}"
     fi
-    # log_debug "${options_ref[source_name]}" "${options_ref[target_name]}"
+    # log_debug "${local_options[source_name]}" "${local_options[target_name]}"
 
-    export "${options_ref[target_name]}"="$value"
-    unset -n options_ref
+    export "${local_options[target_name]}"="$value"
+
+    # unset options_ref[source_name]
+    # unset options_ref[target_name]
+
+    # unset -n options_ref
 }
