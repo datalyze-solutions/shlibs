@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+get_groupname() {
+    local gid="${1}"
+    getent group "${gid}" | cut -d : -f 1
+}
+
 add_user() {
     local uid="${1:-1000}"
     local gid="${2:-1000}"
@@ -18,9 +23,10 @@ add_user() {
     fi
 
     addgroup --gid "${gid}" "${username}"
+    groupname=$(get_groupname "${gid}")
     if [ -z "${shell}" ]; then
-        adduser --uid "${uid}" --disabled-password --ingroup "${gid}" "${username}"
+        adduser --uid "${uid}" --disabled-password --ingroup "${groupname}" "${username}"
     else
-        adduser --uid "${uid}" --disabled-password --ingroup "${gid}" "${username}" --shell "${shell}"
+        adduser --uid "${uid}" --disabled-password --ingroup "${groupname}" "${username}" --shell "${shell}"
     fi
 }
