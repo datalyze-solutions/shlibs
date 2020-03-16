@@ -122,8 +122,8 @@ log() {
   local local_logging_level=0
   local global_logging_level="${LOGGING_LEVEL:-DEBUG}"
 
-  local mode="logger"
-  local show_stats=1
+  local mode=$(_validate_logging_mode "${LOGGING_MODE:-LOGGER}")
+  local show_stats=$(_validate_logging_stats "${LOGGING_STATS:-1}")
 
   while getopts ":hM:Xp:L:" opt; do
     case $opt in
@@ -135,9 +135,7 @@ log() {
     M)
       params=$(count_params "${OPTARG}")
       valid_opts=$((valid_opts + params))
-      if [ "${OPTARG}" = "logger" ] || [ "${OPTARG}" = "echo" ]; then
-        mode="${OPTARG}"
-      fi
+      mode=$(_validate_logging_mode "${OPTARG}")
       ;;
     p)
       params=$(count_params "${OPTARG}")
@@ -182,7 +180,7 @@ log() {
     ;;
   echo)
     if [ "${show_stats}" -eq 1 ]; then
-      echo >&2 "[$priority - $stats] $msg"
+      echo >&2 "priority=\"$priority\" $stats msg=\"$msg\""
     else
       echo >&2 "$msg"
     fi
@@ -191,6 +189,26 @@ log() {
     logger -s -p $priority "$stats msg=\"$msg\""
     ;;
   esac
+}
+
+_validate_logging_mode() {
+  local mode="${1:-logger}"
+
+  if [ $mode = "logger" ] || [ $mode = "echo" ]; then
+    echo $mode
+  else
+    echo "logger"
+  fi
+  return
+}
+
+_validate_logging_stats() {
+  local show_stats="${1:-1}"
+  if [ "${show_stats}" -eq 1 ]; then
+    echo 1
+  else
+    echo 0
+  fi
 }
 
 # level 0
