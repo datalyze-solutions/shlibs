@@ -5,6 +5,11 @@ get_groupname() {
     getent group "${gid}" | cut -d : -f 1
 }
 
+get_username_from_uid() {
+    local HOST_UID="${1:-0}"
+    getent passwd $HOST_UID | cut -d : -f 1
+}
+
 add_user() {
     local uid="${1:-1000}"
     local gid="${2:-1000}"
