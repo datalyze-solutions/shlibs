@@ -1,12 +1,41 @@
 #!/usr/bin/env bash
 
-# usage() {
-#   log_info "usage: $0 [-v] [-h|--help] [--loglevel[=]<value>]" >&2
-# }
+_shlibs-vault-usage() {
+  cat <<EOF
+shlibs-vault: [parameters] command
+
+Parameters
+  -k|--key   <path to the key file>
+  -v|--vault <path to the vault file>
+  -s|--sep   <seperator for the passed envs, defaults to comma ",">
+  -e|--envs  <comma (or --sep) seperated strings of env names to be exported>
+
+Commands
+  - export-envs     Exports the passed variables
+  - view            Prints the content of the vault
+
+Example
+  source /usr/local/bin/shlibs/index.sh
+  envs="db_password,master_pwd"
+  key="/tmp/key"
+  vault="/tmp/secrets.env"
+  shlibs-vault --key "$key" --vault "$vault" --envs "${envs}" export-envs
+  export | grep db_password
+  export | grep master_pwd
+
+EOF
+}
 
 decrypt-vault() {
   local vault="$1"
   local key="$2"
+
+  for var in "${vault}" "${key}"; do
+    if [ ! -f "${var}" ]; then
+      log_error "File does not exist at '${var}'"
+      exit 2
+    fi
+  done
 
   cat "${vault}" | nanvault -p "${key}"
 }
@@ -47,8 +76,9 @@ parse-env-string() {
 }
 
 shlibs-vault() {
-  optspec=":hv:e:k:-:"
+  optspec=":hv:e:k:s:-:"
   envs=()
+  sep=","
 
   while getopts "$optspec" optchar; do
     case "${optchar}" in
@@ -60,6 +90,10 @@ shlibs-vault() {
         ;;
       key)
         key="${!OPTIND}"
+        OPTIND=$(($OPTIND + 1))
+        ;;
+      sep)
+        sep="${!OPTIND}"
         OPTIND=$(($OPTIND + 1))
         ;;
       vault)
@@ -81,6 +115,9 @@ shlibs-vault() {
     k)
       key="${OPTARG}"
       ;;
+    s)
+      sep="${OPTARG}"
+      ;;
     v)
       vault="${OPTARG}"
       ;;
@@ -96,14 +133,12 @@ shlibs-vault() {
 
   shift "$((OPTIND - 1))"
 
-  parse-env-string envs $env_string ","
+  parse-env-string envs $env_string "${sep:-,}"
 
   log_debug "vault '$vault'"
   log_debug "key: '$key'"
   log_debug "envs: '${envs[@]}'"
-
-  log_info "$*"
-  log_info
+  log_debug "seperator: '$sep'"
 
   case "$*" in
   export-envs)
@@ -114,7 +149,7 @@ shlibs-vault() {
     decrypt-vault $vault $key
     ;;
   *)
-    usage
+    _shlibs-vault-usage
     exit 2
     ;;
   esac
