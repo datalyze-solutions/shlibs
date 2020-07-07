@@ -58,6 +58,11 @@ export-vault-envs() {
   local key=$2
   shift 2
 
+  if (( $# == 0 )); then
+    log_warn "No ENVS defined to be exported"
+    exit 3
+  fi
+
   for env; do
     log_debug $env
 
