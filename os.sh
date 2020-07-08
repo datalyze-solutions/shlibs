@@ -7,3 +7,7 @@ shlibs.os.distribution_id() {
 shlibs.os.type() {
     echo "${OSTYPE:-unkown}"
 }
+
+shlibs.os.type.base() {
+    shlibs.os.type | cut -f 1 -d "-"
+}

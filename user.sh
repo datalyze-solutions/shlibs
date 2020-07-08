@@ -29,8 +29,8 @@ shlibs.user.add() {
         return
     fi
 
-    case "$(shlibs.os.type)" in
-    linux-gnu)
+    case "$(shlibs.os.type.base)" in
+    linux)
         shlibs.user.add.linux $uid $gid $username $shell
         ;;
     *)
