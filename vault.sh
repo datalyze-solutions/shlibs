@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-_shlibs-vault-usage() {
+shlibs.vault.usage() {
   cat <<EOF
 shlibs-vault: [parameters] command
 
@@ -26,7 +26,7 @@ Example
 EOF
 }
 
-decrypt-vault() {
+shlibs.vault.decrypt() {
   local vault="$1"
   local key="$2"
 
@@ -40,10 +40,10 @@ decrypt-vault() {
   cat "${vault}" | nanvault -p "${key}"
 }
 
-export-vault-env() {
+shlibs.vault.export-env() {
   local env="${1}"
 
-  log_info "$env"
+  log_debug "$env"
 
   while IFS= read -r line; do
     if [[ $line == "$env="* ]]; then
@@ -53,26 +53,25 @@ export-vault-env() {
 
 }
 
-export-vault-envs() {
+shlibs.vault.export-envs() {
   local vault=$1
   local key=$2
   shift 2
 
-  if (( $# == 0 )); then
+  if (($# > 0)); then
+    for env; do
+      log_debug $env
+
+      # set -o allexport
+      export $(shlibs.vault.decrypt $vault $key | shlibs.vault.export-env ${env})
+      # set +o allexport
+    done
+  else
     log_warn "No ENVS defined to be exported"
-    exit 3
   fi
-
-  for env; do
-    log_debug $env
-
-    set -o allexport
-    source <(decrypt-vault $vault $key | export-vault-env ${env})
-    set +o allexport
-  done
 }
 
-parse-env-string() {
+shlibs.vault.parse-env-string() {
   local -n ref=$1
   local env_string="$2"
   local delimiter="${3:-,}"
@@ -80,37 +79,45 @@ parse-env-string() {
   ref=($(echo $env_string | tr "${delimiter}" "\n"))
 }
 
-shlibs-vault() {
-  optspec=":hv:e:k:s:-:"
-  envs=()
-  sep=","
+shlibs.vault() {
 
-  while getopts "$optspec" optchar; do
+  local OPTIND ignore
+  local OPTARG
+
+  _optspec=":hv:e:k:s:-:"
+  _envs=()
+  _sep=","
+
+  log_debug "vault '$_vault'"
+  log_debug "key: '$_key'"
+  log_debug "env-string: '${_env_string}'"
+  log_debug "seperator: '$_sep'"
+
+  while getopts "$_optspec" optchar; do
     case "${optchar}" in
     -)
       case "${OPTARG}" in
       envs)
-        env_string="${!OPTIND}"
+        _env_string="${!OPTIND}"
         OPTIND=$(($OPTIND + 1))
         ;;
       key)
-        key="${!OPTIND}"
+        _key="${!OPTIND}"
         OPTIND=$(($OPTIND + 1))
         ;;
       sep)
-        sep="${!OPTIND}"
+        _sep="${!OPTIND}"
         OPTIND=$(($OPTIND + 1))
         ;;
       vault)
-        vault="${!OPTIND}"
+        _vault="${!OPTIND}"
         OPTIND=$(($OPTIND + 1))
         ;;
       help)
-        usage
-        exit 2
+        _shlibs-vault-usage
         ;;
       *)
-        catch-unknown-opt "--"
+        shlibs.getopts.catch-unknown-opt "--"
         ;;
       esac
       ;;
@@ -127,36 +134,42 @@ shlibs-vault() {
       vault="${OPTARG}"
       ;;
     h)
-      usage
-      exit 2
+      _shlibs-vault-usage
       ;;
     *)
-      catch-unknown-opt "-"
+      shlibs.getopts.catch-unknown-opt "-"
       ;;
     esac
   done
 
   shift "$((OPTIND - 1))"
 
-  parse-env-string envs $env_string "${sep:-,}"
-
-  log_debug "vault '$vault'"
-  log_debug "key: '$key'"
-  log_debug "envs: '${envs[@]}'"
-  log_debug "seperator: '$sep'"
-
   case "$*" in
   export-envs)
-    log_info "Exporting variables"
-    export-vault-envs $vault $key ${envs[@]}
+    log_debug "vault '$_vault'"
+    log_debug "key: '$_key'"
+    log_debug "env-string: '${_env_string}'"
+    log_debug "seperator: '$_sep'"
+
+    shlibs.vault.parse-env-string _envs $_env_string "${_sep:-,}"
+
+    log_debug "parsed envs: '${_envs[@]}'"
+
+    log_info "Exporting variables: ${_envs[@]}"
+    shlibs.vault.export-envs $_vault $_key ${_envs[@]}
     ;;
   view)
-    decrypt-vault $vault $key
+    shlibs.vault.decrypt $_vault $_key
     ;;
   *)
-    _shlibs-vault-usage
-    exit 2
+    shlibs.vault.usage
     ;;
   esac
 
+  unset _env_string
+  unset _vault
+  unset _key
+  unset _envs
+  unset OPTIND
+  unset OPTARG
 }
