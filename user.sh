@@ -29,12 +29,12 @@ shlibs.user.add() {
         return
     fi
 
-    case "${distribution_id}" in
-    debian | ubuntu | alpine)
+    case "$(shlibs.os.type)" in
+    linux-gnu)
         shlibs.user.add.linux $uid $gid $username $shell
         ;;
     *)
-        log_error "Unknown distribution detected."
+        log_error "Unknown os detected."
         ;;
     esac
 }
