@@ -33,7 +33,13 @@ clone_associative_array() {
 shlibs.array.sort() {
     local -n -r input_array_ref="$1"
     local -n output_array_ref="$2"
+    shift 2
 
-    IFS=$'\n' output_array_ref=($(sort <<<"${input_array_ref[*]}"))
+    IFS=$'\n' output_array_ref=($(sort $@ <<<"${input_array_ref[*]}"))
     unset IFS
+}
+
+shlibs.array.sort.unique() {
+    # sorts param --unique is not available on every os, e.g. alpine
+    shlibs.array.sort $1 $2 -u
 }
