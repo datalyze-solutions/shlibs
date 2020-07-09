@@ -29,3 +29,11 @@ clone_associative_array() {
     unset -n source_ref
     unset -n target_ref
 }
+
+shlibs.array.sort() {
+    local -n -r input_array_ref="$1"
+    local -n output_array_ref="$2"
+
+    IFS=$'\n' output_array_ref=($(sort <<<"${input_array_ref[*]}"))
+    unset IFS
+}
