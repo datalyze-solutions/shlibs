@@ -2,45 +2,52 @@
 
 shlibs.run-init-scripts() {
 
-  _find_init_files() {
-    local search_path="${1:-${INIT_SCRIPT_DIR}}"
-    local search_string="${2:-}"
-    shift 2
+  local OPTIND ignore
+  local OPTARG
 
-    find -L "${search_path}" -type f -name "$search_string" "$@" | sort
-  }
+  local init_script_dirs="/opt/init"
+  local _optspec=":hs:-:"
 
-  for search_string in "$@"; do
-    # remove path -printf '%f\n'
-    for search_path in ${INIT_SCRIPT_DIR} ${INIT_LANGUAGE_SCRIPT_DIR}; do
-      found_init_files=($(_find_init_files ${search_path} ${search_string:-*.sh}))
-      init_files=("${init_files[@]}" "${found_init_files[@]}")
-    done
+  while getopts "$_optspec" optchar; do
+    case "${optchar}" in
+    -)
+      case "${OPTARG}" in
+      init_script_dirs)
+        init_script_dirs="${!OPTIND}"
+        OPTIND=$(($OPTIND + 1))
+        ;;
+      *)
+        shlibs.getopts.catch-unknown-opt "--"
+        ;;
+      esac
+      ;;
+    s)
+      init_script_dirs="${OPTARG}"
+      ;;
+    *)
+      shlibs.getopts.catch-unknown-opt "-"
+      ;;
+    esac
   done
 
-  # for arg in "$@"; do
-  #   case "$*" in
-  #   *--init* | *-i*)
-  #     init_files=($(_find_init_files -name "*.sh" ! -name "*.production.sh" ! -name "*.development.sh"))
-  #     log_debug "init_files: ${init_files[@]}"
-  #     ;;
-  #   *--development* | *--dev* | *-d*)
-  #     init_files_development=($(_find_init_files -name "*.development.sh"))
-  #     log_debug "init_files_development: ${init_files_development[@]}"
-  #     ;;
-  #   *--production* | *--prod* | *-p*)
-  #     init_files_production=($(_find_init_files -name "*.production.sh"))
-  #     log_debug "init_files_production: ${init_files_production[@]}"
-  #     ;;
-  #   *--user* | *-u*)
-  #     init_files_user=($(_find_init_files -name "*.user.sh"))
-  #     log_debug "init_files_user: ${init_files_production[@]}"
-  #     ;;
-  #   esac
-  # done
+  shift "$((OPTIND - 1))"
 
-  # compose arrays, like spread operator
-  # init_files=("${init_files[@]}" "${init_files_development[@]}" "${init_files_production[@]}" "${init_files_user[@]}")
+  log_debug "$init_script_dirs"
+  log_debug "$@"
+
+  IFS=':' read -ra init_scripts <<<"$init_script_dirs"
+  log_debug "init_scripts: ${init_scripts[@]}"
+
+  for search_string in "$@"; do
+    for search_path in ${init_scripts[@]}; do
+      log_debug "USING $search_path ${search_string}"
+      found_init_files=($(find -L "${search_path}" -type f -name "$search_string" | sort))
+      # compose arrays, like spread operator
+      init_files=("${init_files[@]}" "${found_init_files[@]}")
+      log_debug "found init files: ${found_init_files[@]}"
+      log_debug "init_files: ${init_files[@]}"
+    done
+  done
 
   shlibs.array.sort.unique init_files init_files
   log_debug "init_files: ${init_files[@]}"
@@ -51,6 +58,5 @@ shlibs.run-init-scripts() {
   done
 
   # clean vars, if we run the command again in the same shell, the are still set otherwise
-  unset -f _find_init_files
   unset init_files
 }
