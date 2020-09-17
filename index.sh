@@ -7,7 +7,7 @@ script_dir=$(dirname "${BASH_SOURCE[0]}")
 # export PATH=$PATH:$script_dir/bin
 
 if [[ "$1" == "--reload" || "$1" == "-r" ]]; then
-    echo "Reloading"
+    echo "Reloading shlibs functions"
     source ${script_dir}/unset.sh
 fi
 
