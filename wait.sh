@@ -1,13 +1,13 @@
 #!/bin/sh
 
-wait_indefinitely() {
+shlibs.wait_indefinitely() {
     while true; do
         tail -f /dev/null &
         wait "${!}"
     done
 }
 
-wait_for_postgres() {
+shlibs.wait_for_postgres() {
     local host="${1:-127.0.0.1}"
     local sleeptime="${2:-5}"
     local user="${3:-root}"
@@ -18,4 +18,12 @@ wait_for_postgres() {
         sleep $sleeptime
     done
     log_info "Postgres is available"
+}
+
+wait_indefinitely() {
+    shlibs.wait_indefinitely "$@"
+}
+
+wait_for_postgres() {
+    shlibs.wait_for_postgres "$@"
 }
