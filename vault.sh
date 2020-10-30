@@ -65,7 +65,7 @@ shlibs.vault.export-envs() {
       # set -o allexport
       result=$(shlibs.vault.decrypt $vault $key | shlibs.vault.export-env ${env})
       log_debug "Result: $result"
-      eval "export '$result'"
+      eval "export \"$result\""
       # set +o allexport
     done
   else
