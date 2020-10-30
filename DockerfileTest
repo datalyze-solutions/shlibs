@@ -1,0 +1,5 @@
+FROM datalyzesolutions/shlibs:latest as shlibs
+FROM alpine:latest
+RUN apk add --no-cache bash
+COPY --from=shlibs /usr/local/bin/shlibs /usr/local/bin/shlibs
+

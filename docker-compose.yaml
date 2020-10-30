@@ -1,0 +1,14 @@
+version: '2.4'
+
+services:
+
+  shlibs:
+    image: datalyzesolutions/shlibs:latest
+    build: .
+
+  test:
+    image: test
+    build:
+      context: .
+      dockerfile: DockerfileTest
+    command: bash -c 'source /usr/local/bin/shlibs/index.sh && log_info "HELLO WORLD!"'

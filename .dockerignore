@@ -1,0 +1,6 @@
+Dockerfile
+DockerfileTest
+docker-compose.yaml
+.git
+.dockerignore
+.git*
