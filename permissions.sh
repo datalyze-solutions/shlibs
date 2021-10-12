@@ -23,7 +23,7 @@ shlibs.chmod_directories() {
 }
 
 chown_directories() {
-    shlibs.chmod_directories "$@"
+    shlibs.chown_directories "$@"
 }
 
 chmod_directories() {
