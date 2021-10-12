@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-chown_directories() {
+shlibs.chown_directories() {
     # use the given array through a reference
     declare -n directories_ref="$1"
     local owner="${2}"
@@ -11,7 +11,7 @@ chown_directories() {
     unset -n directories_ref
 }
 
-chmod_directories() {
+shlibs.chmod_directories() {
     # use the given array through a reference
     declare -n directories_ref="$1"
     local permissions="${2}"
@@ -20,4 +20,12 @@ chmod_directories() {
         chmod ${permissions} -R "${dir}"
     done
     unset -n directories_ref
+}
+
+chown_directories() {
+    shlibs.chmod_directories "$@"
+}
+
+chmod_directories() {
+    shlibs.chmod_directories "$@"
 }
